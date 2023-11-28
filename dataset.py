@@ -5,9 +5,10 @@ import torch
 from PIL import Image
 
 image_width, image_height = 700, 700
+GRID_SIZE = 7 
 
 class MNISTBoundingBoxDataset(torchvision.datasets.MNIST):
-    def __init__(self, root, train=True, transform=None, download=False, grid_size=7):
+    def __init__(self, root, train=True, transform=None, download=False, grid_size=GRID_SIZE):
         super().__init__(root, train=train, transform=transform, download=download)
         cell_width = image_width / grid_size
         self.canvas_size = (image_width, image_height)
@@ -30,63 +31,53 @@ class MNISTBoundingBoxDataset(torchvision.datasets.MNIST):
         canvas = Image.new('L', self.canvas_size)
 
         # Choose a random position (where x,y are centred in object) to place the digit
-        max_x = self.canvas_size[0] - new_size[0] + new_size[0] / 2
-        max_y = self.canvas_size[1] - new_size[1] + new_size[1] / 2
-        x = random.randint(0, int(max_x))
-        y = random.randint(0, int(max_y))
+        half_width, half_height = new_size[0] / 2, new_size[1] / 2
+        max_x = self.canvas_size[0] - new_size[0] + half_width
+        max_y = self.canvas_size[1] - new_size[1] + half_height
+        x_abs = random.randint(int(half_width), int(max_x))
+        y_abs = random.randint(int(half_height), int(max_y))
 
+        top_left = (int(x_abs - half_width), int(y_abs - half_height))
         # Place the digit on the canvas
-        canvas.paste(img, (x, y))
+        canvas.paste(img, top_left)
 
         cell_width, cell_height = self.cell_size
-        x_cell = (x / cell_width) % 1  # Relative x (center) in the responsible cell
-        y_cell = (y  / cell_height) % 1  # Relative y (center) in the responsible cell
+        x = (x_abs / cell_width) % 1  # Relative x (center) in the responsible cell
+        y = (y_abs / cell_height) % 1  # Relative y (center) in the responsible cell
         w_cell = new_size[0] / self.canvas_size[0]  # Relative width to entire image
         h_cell = new_size[1] / self.canvas_size[1]  # Relative height to entire image
 
         # Determine which grid cell is responsible for the digit
-        grid_x = int(x / cell_width)
-        grid_y = int(y / cell_height)
-        print(f"grid_x: {grid_x}, grid_y: {grid_y}")
+        grid_x = int(x_abs / cell_width)
+        grid_y = int(y_abs / cell_height)
 
         # Define the bounding box (x_center, y_center, width, height) relative to grid cell
-        bounding_box = (x_cell, y_cell, w_cell, h_cell)
-        print(f"x_cell,y_cell: {x_cell},{y_cell}")
+        bounding_box = (x, y, w_cell, h_cell)
 
         # Convert the canvas to a tensor
         canvas = transforms.ToTensor()(canvas)
 
         # Create a target tensor representing the grid
-        target = torch.zeros((self.grid_size, self.grid_size, 5))  # Assuming 5 values (x, y, w, h, class)
-        target[grid_x, grid_y, :4] = torch.tensor(bounding_box)
-        target[grid_x, grid_y, 4] = label  # Add class label
+        target = torch.zeros(15, self.grid_size, self.grid_size)  # Assuming 5 values (x, y, w, h, class)
+        # Add confidence score (1) to the responsible grid cell
+        target[0, grid_x, grid_y] = 1  # Confidence score
+        target[1:5, grid_x, grid_y] = torch.tensor(bounding_box)
+        num_classes = 10  # Total number of classes (digits 0-9)
+        # Convert the label to a one-hot encoded tensor
+        one_hot_label = torch.nn.functional.one_hot(torch.tensor(label), num_classes)
+        # Add the one-hot encoded label to the target tensor
+        target[5:, grid_x, grid_y] = one_hot_label
 
-        # target has shape (grid_size, grid_size, 5)
-        # print(f"target.shape: {target.shape}")
+        # target has shape (15, grid_size, grid_size)
+        print(f"target.shape: {target.shape}")
 
         return canvas, target
 
 # # Usage
 transform = transforms.ToTensor()  # Add any additional transformations here
 
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
-# Function to convert relative to absolute bounding boxes
-def get_absolute_bounding_box(rel_box, grid_x, grid_y, cell_width, cell_height):
-    rel_x_center, rel_y_center, rel_w, rel_h = rel_box
-    print(f"rel_x_center, rel_y_center, rel_w, rel_h: {rel_x_center}, {rel_y_center}, {rel_w}, {rel_h}")
-    rel_x = rel_x_center - (rel_w / 2)
-    rel_y = rel_y_center - (rel_h / 2)
-    abs_x = (rel_x + grid_x) * cell_width
-    abs_y = (rel_y + grid_y) * cell_height
-    abs_w = rel_w * image_width
-    abs_h = rel_h * image_height
-    x_min = abs_x - (abs_w / 2)
-    y_min = abs_y - (abs_h / 2)
-    return x_min, y_min, x_min + abs_w, y_min + abs_h
-
 
 if __name__ == '__main__':
     # Load the dataset
@@ -94,42 +85,38 @@ if __name__ == '__main__':
 
     # Get a sample image, bounding box, and label
     image, target = dataset[60]  # Change 0 to any index to test different samples
-
-    bounding_box = target[:,:,:4]
-    label = target[:,:,4]
+    bounding_box = target[:4,:,:]
+    label = target[4:,:,:]
     # Convert the tensor image back to PIL for display
     pil_img = transforms.ToPILImage()(image).convert("RGB")
 
     # Create a matplotlib figure
     fig, ax = plt.subplots()
     ax.imshow(pil_img)
-
     # Add the grid
-    grid_size = 7
-    cell_width = image.shape[1] / grid_size
-    cell_height = image.shape[0] / grid_size
+    cell_width = image_width / GRID_SIZE
+    cell_height = image_height / GRID_SIZE
 
-    for i in range(grid_size):
-        for j in range(grid_size):
-            rel_bounding_box = target[i, j, :4]  # Extract relative bounding box
-            abs_bounding_box = get_absolute_bounding_box(rel_bounding_box, i, j, cell_width, cell_height)
-
-            # You can now use abs_bounding_box for plotting or other purposes
-            x_min, y_min, x_max, y_max = abs_bounding_box
-            rect = patches.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, 
-                                    linewidth=1, edgecolor='r', facecolor='none')
-            ax.add_patch(rect)
-
-    # Add the bounding box
-    # Bounding box format: (x_min, y_min, x_max, y_max)
-    # (x, y, w, h) = bounding_box
-    # x_min = x - (w / 2)
-    # y_min = y - (h / 2)
-    # x_max = x + (w / 2)
-    # y_max = y + (h / 2)
-    # rect = patches.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, 
-    #                          linewidth=1, edgecolor='r', facecolor='none')
-    # ax.add_patch(rect)
+    for i in range(GRID_SIZE):
+        for j in range(GRID_SIZE):
+            rel_bounding_box = target[1:5, i, j]  # Extract relative bounding box
+            if(rel_bounding_box[2] > 0 and rel_bounding_box[3] > 0):
+                print(f"i: {i}, j: {j}")
+                x, y, w, h = rel_bounding_box
+                print(f"x: {x}, y: {y}")
+                x_abs = (x + i) * cell_width
+                y_abs = (y + j) * cell_height
+                print(f"cell_width, cell_height: {cell_width}, {cell_height}")
+                print(f"x_abs, y_abs: {x_abs}, {y_abs}")
+                w_abs = w * image_width
+                h_abs = h * image_height
+                x_min = x_abs - (w_abs / 2)
+                y_min = y_abs - (h_abs / 2)
+                print(f"x_min, y_min: {x_min}, {y_min}")
+                # You can now use abs_bounding_box for plotting or other purposes
+                rect = patches.Rectangle((x_min, y_min), w_abs, h_abs, 
+                                        linewidth=1, edgecolor='r', facecolor='none')
+                ax.add_patch(rect)
 
     # Display the image and bounding box
     plt.show()

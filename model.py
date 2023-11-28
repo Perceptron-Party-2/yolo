@@ -29,7 +29,6 @@ class YOLOConvNet(nn.Module):
         # Apply the convolutional layers
         # for layer, idx in self.conv_layers:
         for idx, layer in enumerate(self.conv_layers):
-            print(f"layer {idx} input shape: {x.shape}")
             x = layer(x)
 
         return x
