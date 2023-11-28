@@ -14,10 +14,15 @@ model.eval()
 dataset = MNISTBoundingBoxDataset(root="data", train=True, download=True, transform=transform)
 
 # Get a sample image, bounding box, and label
-image, bounding_box, label = dataset[10]  # Change 0 to any index to test different samples
+image, target = dataset[10]  # Change 0 to any index to test different samples
 
+print(f"target.shape: {target.shape}")
+# print(f"target: {target}")
+bounding_box = target[:,:,:4]
+label = target[:,:,4]
 # Print the label
 print(f"Label: {label}")
+print(f"Bounding box: {bounding_box}")
 
 # Add a batch dimension
 image = image.unsqueeze(0)
