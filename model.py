@@ -18,12 +18,12 @@ class YOLOConvNet(nn.Module):
                 self.conv_layers.append(conv_layer)
                 self.conv_layers.append(nn.LeakyReLU(0.1, inplace=True))
 
-        # Initialize the max pooling layer
-        if 'maxpool' in layer_config:
-            maxpool_config = layer_config['maxpool']
-            maxpool_layer = nn.MaxPool2d(kernel_size=maxpool_config['kernel_size'],
-                                            stride=maxpool_config['stride'])
-            self.conv_layers.append(maxpool_layer)
+            # Initialize the max pooling layer
+            if 'maxpool' in conv_config:
+                maxpool_config = conv_config['maxpool']
+                maxpool_layer = nn.MaxPool2d(kernel_size=maxpool_config['kernel_size'],
+                                                stride=maxpool_config['stride'])
+                self.conv_layers.append(maxpool_layer)
 
     def forward(self, x):
         # Apply the convolutional layers
