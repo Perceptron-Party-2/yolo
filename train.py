@@ -13,14 +13,14 @@ batch_size = 64
 num_epochs = 1
 
 wandb.login()
-# wandb.init(
-#     project="yolo",
-#     config={
-#         "learning_rate": learning_rate,
-#         "batch_size": batch_size,
-#         "num_epochs": num_epochs,
-#     },
-# )
+wandb.init(
+    project="yolo",
+    config={
+        "learning_rate": learning_rate,
+        "batch_size": batch_size,
+        "num_epochs": num_epochs,
+    },
+)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
