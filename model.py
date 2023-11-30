@@ -29,7 +29,6 @@ class YOLOConvNet(nn.Module):
         # Apply the convolutional layers
         # for layer, idx in self.conv_layers:
         for idx, layer in enumerate(self.conv_layers):
-            print(f"layer {idx} input shape: {x.shape}")
             x = layer(x)
 
         return x
@@ -97,19 +96,13 @@ class YOLO(torch.nn.Module):
 
     def forward(self, x):
         x = self.conv(x)
-        print("after: conv", x.shape)
         # Apply adaptive average pooling to reduce each channel to 1x4
         x = torch.nn.functional.adaptive_avg_pool2d(x, (7, 7))
-        print("after: avgpool", x.shape)
         x = x.view(-1, 1024 * 7 * 7)
         # x = x.view(x.size(0), -1)
-        print("after: flattening", x.shape)
         x = self.fc1(x)
-        print("after: fc1", x.shape)
         x = self.fc2(x)
-        print("after: fc2", x.shape)
         # reshape the output to (batch_size, 7, 7, 20)
         x = x.view(-1, 20, 7, 7)
-        print("after: reshape", x.shape)
         return x
 
