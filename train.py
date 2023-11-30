@@ -7,20 +7,23 @@ from model import YOLO  # Replace with your YOLO model class
 from loss import YOLOLoss  # Replace with your YOLO loss class
 import wandb
 import tqdm
+import conv_config_yolo
 # Configuration parameters
 learning_rate = 0.001
 batch_size = 64
 num_epochs = 1
 
 wandb.login()
-# wandb.init(
-#     project="yolo",
-#     config={
-#         "learning_rate": learning_rate,
-#         "batch_size": batch_size,
-#         "num_epochs": num_epochs,
-#     },
-# )
+wandb.init(
+    project="yolo",
+    config={
+        "learning_rate": learning_rate,
+        "batch_size": batch_size,
+        "num_epochs": num_epochs,
+    },
+    group="perceptrongang",
+
+)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -29,7 +32,7 @@ train_dataset = MNISTBoundingBoxDataset(root="data", train=True, download=True, 
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 # Initialize model and loss function
-model = YOLO().to(device)  # Fill in with appropriate arguments
+model = YOLO(conv_configs=conv_config_yolo).to(device)  # Fill in with appropriate arguments
 criterion = YOLOLoss().to(device)  # Fill in with appropriate arguments
 
 # Optimizer
