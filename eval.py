@@ -1,11 +1,12 @@
 from dataset import MNISTBoundingBoxDataset, transform
-from model import YOLO
+from minimodel2 import miniModel
+import torch
 
 # Load the model
-model = YOLO()
+model = miniModel(image_width=448, image_height=448, image_channels=1, grid_ratio=64, num_bounding_boxes=2, num_classes=10, dropout=0.3)
 
 # Load the weights
-# model.load_state_dict(torch.load("yolo.pth"))
+model.load_state_dict(torch.load("yolo_0.pth"))
 
 # Set the model in evaluation mode
 model.eval()
@@ -21,8 +22,8 @@ print(f"target.shape: {target.shape}")
 bounding_box = target[:,:,:4]
 label = target[:,:,4]
 # Print the label
-print(f"Label: {label}")
-print(f"Bounding box: {bounding_box}")
+#print(f"Label: {label}")
+#print(f"Bounding box: {bounding_box}")
 
 # Add a batch dimension
 image = image.unsqueeze(0)
@@ -31,7 +32,6 @@ print(f"image.shape: {image.shape}")
 
 # Get the predicted bounding box
 predicted_bounding_box = model(image)
-
-# Print the shape of the output
-print(f"Predicted bounding box shape: {predicted_bounding_box.shape}")
+print(predicted_bounding_box)
+#print(f"Predicted bounding box shape: {predicted_bounding_box.shape}")
 

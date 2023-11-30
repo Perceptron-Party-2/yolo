@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import MNISTBoundingBoxDataset, transform
 #from model import YOLO  # Replace with your YOLO model class
-from miniModel import miniModel
+from minimodel2 import miniModel
 from loss import YOLOLoss  # Replace with your YOLO loss class
 import wandb
 import tqdm
@@ -12,7 +12,7 @@ import conv_config_yolo
 # Configuration parameters
 learning_rate = 0.001
 batch_size = 64
-num_epochs = 1
+num_epochs = 10
 
 
 
@@ -35,7 +35,7 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=
 
 # Initialize model and loss function
 #model = YOLO(conv_configs=conv_config_yolo).to(device)  # Fill in with appropriate arguments
-model = miniModel(image_width=448, image_height=448, image_channels=1, grid_ratio=64, num_bounding_boxes=2, num_classes=10, dropout=0.5)
+model = miniModel(image_width=448, image_height=448, image_channels=1, grid_ratio=64, num_bounding_boxes=2, num_classes=10, dropout=0.4)
 criterion = YOLOLoss().to(device)  # Fill in with appropriate arguments
 
 # Optimizer
@@ -66,7 +66,7 @@ for epoch in range(num_epochs):
             print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
 
 # Save model
-torch.save(model.state_dict(), f"yolo_{epoch}.pth")
+    torch.save(model.state_dict(), f"yolo_{epoch}.pth")
 print("Training completed.")
 
 wandb.finish()

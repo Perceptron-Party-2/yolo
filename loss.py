@@ -11,7 +11,7 @@ import torch.nn as nn
 # In[4]:
 
 
-def IoU(gt_box, pred_box):
+def IoU(pred_box,gt_box):
 
     x1 = gt_box[...,0]
     y1 = gt_box[...,1]
