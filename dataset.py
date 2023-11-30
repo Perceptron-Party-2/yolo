@@ -4,7 +4,7 @@ import random
 import torch
 from PIL import Image
 
-image_width, image_height = 700, 700
+image_width, image_height = 448, 448
 GRID_SIZE = 7 
 
 class MNISTBoundingBoxDataset(torchvision.datasets.MNIST):
@@ -68,8 +68,6 @@ class MNISTBoundingBoxDataset(torchvision.datasets.MNIST):
         # Add the one-hot encoded label to the target tensor
         target[5:, grid_x, grid_y] = one_hot_label
 
-        # target has shape (15, grid_size, grid_size)
-        print(f"target.shape: {target.shape}")
 
         return canvas, target
 
