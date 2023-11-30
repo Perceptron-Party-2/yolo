@@ -7,6 +7,10 @@
 import torch
 import torch.nn as nn
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+
 
 # In[26]:
 
@@ -18,7 +22,7 @@ class ConvLayer(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
         self.norm = nn.BatchNorm2d(out_channels)
         self.lrelu = nn.LeakyReLU(0.1)
-        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2).to(device)
 
     def forward(self, x):
         x = self.conv(x)
@@ -28,8 +32,6 @@ class ConvLayer(nn.Module):
             x = self.maxpool(x)
         return x
 
-
-# In[36]:
 
 
 class miniModel(nn.Module):
@@ -68,7 +70,7 @@ class miniModel(nn.Module):
         
         x = self.fc2(x)
         x = self.dropout(x)
-        x = x.view(-1, (self.image_width/self.grid_ratio), (self.image_height/self.grid_ratio), self.num_bounding_boxes * (5 + self.num_classes))  # 7x7 grid, 30 values per grid cell (2 bounding box coordinates + 20 class scores + 2 confidence scores)
+        x = x.view(-1, (self.image_width//self.grid_ratio), (self.image_height//self.grid_ratio), self.num_bounding_boxes * (5 + self.num_classes))  # 7x7 grid, 30 values per grid cell (2 bounding box coordinates + 20 class scores + 2 confidence scores)
         return x
 
 

@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import MNISTBoundingBoxDataset, transform
-from model import YOLO  # Replace with your YOLO model class
+#from model import YOLO  # Replace with your YOLO model class
+from miniModel import miniModel
 from loss import YOLOLoss  # Replace with your YOLO loss class
 import wandb
 import tqdm
@@ -12,6 +13,8 @@ import conv_config_yolo
 learning_rate = 0.001
 batch_size = 64
 num_epochs = 1
+
+
 
 wandb.login()
 wandb.init(
@@ -31,7 +34,8 @@ train_dataset = MNISTBoundingBoxDataset(root="data", train=True, download=True, 
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 # Initialize model and loss function
-model = YOLO(conv_configs=conv_config_yolo).to(device)  # Fill in with appropriate arguments
+#model = YOLO(conv_configs=conv_config_yolo).to(device)  # Fill in with appropriate arguments
+model = miniModel(image_width=448, image_height=448, image_channels=1, grid_ratio=64, num_bounding_boxes=2, num_classes=10, dropout=0.5)
 criterion = YOLOLoss().to(device)  # Fill in with appropriate arguments
 
 # Optimizer
@@ -44,7 +48,7 @@ for epoch in range(num_epochs):
         # print(f"images.shape: {images.shape}")
         images = images.to(device)
         targets = targets.to(device)
-
+        model = model.to(device)
         # Forward pass
         outputs = model(images)
         loss = criterion(outputs, targets)
