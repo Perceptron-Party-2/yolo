@@ -22,7 +22,6 @@ wandb.init(
         "num_epochs": num_epochs,
     },
     group="perceptrongang",
-
 )
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
