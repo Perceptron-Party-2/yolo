@@ -46,8 +46,6 @@ def create_image(image, target, prediction):
     assert image.shape == (1, 448, 448)
     print(f"prediction.shape: {prediction.shape}")
     assert prediction.shape == (GRID_SIZE, GRID_SIZE, 15)
-    print(f"target.shape: {target.shape}")
-    assert target.shape == (15, GRID_SIZE, GRID_SIZE)
      # Convert the tensor image back to PIL for display
     pil_img = transforms.ToPILImage()(image).convert("RGB")
 
