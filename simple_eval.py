@@ -10,6 +10,8 @@ from dataset import (
     image_height,
 )
 from minimodel2 import miniModel
+from io import BytesIO
+import base64
 
 model = miniModel(
     image_width=image_width,
@@ -41,7 +43,7 @@ def paint_bounding_box(box, digit, confidence, i,j,cell_width,cell_height, ax, c
         ax.add_patch(rect)
         ax.annotate(f"{digit} ({confidence})", (x_min, y_min), color=color, weight='bold', fontsize=10, ha='left', va='bottom')
 
-def create_image(image, target, prediction):
+def create_image(image, target, prediction, base64_out=False):
     print(f"image.shape: {image.shape}")
     assert image.shape == (1, 448, 448)
     print(f"prediction.shape: {prediction.shape}")
@@ -97,6 +99,15 @@ def create_image(image, target, prediction):
                     ax,
                     color="green",
                 )
+
+    if base64_out:
+        buf = BytesIO()
+        plt.savefig(buf, format='png')
+        plt.close()
+        buf.seek(0)
+        image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+        return f"data:image/png;base64,{image_base64}"
+    
     return plt
 
 
@@ -112,6 +123,7 @@ if __name__ == "__main__":
     prediction = model(image.unsqueeze(0)).detach().squeeze(0)
 
     plt = create_image(image, target, prediction)
-   
+    print(create_image(image, target, prediction, base64_out=True))
+
     # Display the image and bounding box
     plt.show()

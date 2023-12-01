@@ -4,7 +4,6 @@ import base64
 import numpy
 import cv2
 import minimodel2
-from io import BytesIO
 from simple_eval import create_image
 from fastapi.responses import StreamingResponse
 
@@ -41,11 +40,7 @@ async def one_number(request: fastapi.Request):
     npImgTensor = npImgTensor.view(1, 1, 448, 448)
     prediction = app.state.model(npImgTensor).detach().squeeze(0)
 
-    plt = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction)
-    buf = BytesIO()
-    plt.savefig(buf, format='png')
-    plt.close()
-    buf.seek(0)
-    image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    image_base64 = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction, base64_out=True)
+
     return image_base64
 
