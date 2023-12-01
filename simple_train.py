@@ -62,7 +62,10 @@ for epoch in range(num_epochs):
         
         if (i + 1) % 10 == 0:  # Print every 10th batch
             print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
-
+        
+        if (i + 1) % 100 == 0:
+            # Save model
+            torch.save(model.state_dict(), f"yolo_{epoch}_{i}.pth")
 # Save model
     torch.save(model.state_dict(), f"yolo_{epoch}.pth")
 print("Training completed.")
