@@ -104,6 +104,7 @@ if __name__ == "__main__":
 
     # Get a sample image, bounding box, and label
     image, target = dataset[15]  # Change 0 to any index to test different samples
+    print(f"image.shape: {image.shape}")
     prediction = model(image.unsqueeze(0)).detach().squeeze(0)
 
     plt = create_image(image, target, prediction)

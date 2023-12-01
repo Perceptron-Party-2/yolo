@@ -41,11 +41,11 @@ async def one_number(request: fastapi.Request):
     npImgTensor = npImgTensor.view(1, 1, 448, 448)
     prediction = app.state.model(npImgTensor)
 
-    plt = create_image(image=npImgTensor, target=None, prediction=prediction)
+    plt = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction)
     buf = BytesIO()
     plt.savefig(buf, format='png')
     plt.close()
     buf.seek(0)
+    image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    return image_base64
 
-    # Return the buffer as a StreamingResponse
-    return StreamingResponse(buf, media_type="image/png") 
