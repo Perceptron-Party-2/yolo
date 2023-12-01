@@ -41,7 +41,7 @@ async def one_number(request: fastapi.Request):
     npImgTensor = npImgTensor.view(1, 1, 448, 448)
     prediction = app.state.model(npImgTensor)
 
-    plt = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction)
+    plt = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction.squeeze(0))
     buf = BytesIO()
     plt.savefig(buf, format='png')
     plt.close()
