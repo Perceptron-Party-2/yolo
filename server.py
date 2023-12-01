@@ -5,7 +5,6 @@ import numpy
 import cv2
 import minimodel2
 from simple_eval import create_image
-from fastapi.responses import StreamingResponse
 
 app = fastapi.FastAPI()
 
@@ -38,9 +37,12 @@ async def one_number(request: fastapi.Request):
     npImgTensor = torch.tensor(npImg)
     npImgTensor = npImgTensor.unsqueeze(dim=0).float()
     npImgTensor = npImgTensor.view(1, 1, 448, 448)
+
+
+
     prediction = app.state.model(npImgTensor).detach().squeeze(0)
 
     image_base64 = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction, base64_out=True)
 
-    return image_base64
+    return { 'img': image_base64 }
 
