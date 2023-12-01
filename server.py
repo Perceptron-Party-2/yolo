@@ -39,9 +39,9 @@ async def one_number(request: fastapi.Request):
     npImgTensor = torch.tensor(npImg)
     npImgTensor = npImgTensor.unsqueeze(dim=0).float()
     npImgTensor = npImgTensor.view(1, 1, 448, 448)
-    prediction = app.state.model(npImgTensor)
+    prediction = app.state.model(npImgTensor).detach().squeeze(0)
 
-    plt = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction.squeeze(0))
+    plt = create_image(image=npImgTensor.squeeze(0), target=None, prediction=prediction)
     buf = BytesIO()
     plt.savefig(buf, format='png')
     plt.close()
