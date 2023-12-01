@@ -20,11 +20,11 @@ model = miniModel(
     num_classes=10,
     dropout=0.4,
 )
-model.load_state_dict(torch.load("yolo_0_299.pth"))
+model.load_state_dict(torch.load("yolo_2_299.pth"))
 model.eval()
 
 
-def paint_bounding_box(box, digit, confidence, ax, color="red"):
+def paint_bounding_box(box, digit, confidence, i,j,cell_width,cell_height, ax, color="red"):
     x, y, w, h = box
     if box[2] > 0 and box[3] > 0:
         x, y, w, h = box
@@ -41,21 +41,12 @@ def paint_bounding_box(box, digit, confidence, ax, color="red"):
         ax.add_patch(rect)
         ax.annotate(f"{digit} ({confidence})", (x_min, y_min), color=color, weight='bold', fontsize=10, ha='left', va='bottom')
 
-
-if __name__ == "__main__":
-    # Load the dataset
-    dataset = MNISTBoundingBoxDataset(
-        root="data", train=True, download=True, transform=transform
-    )
-
-    # Get a sample image, bounding box, and label
-    image, target = dataset[4]  # Change 0 to any index to test different samples
-    prediction = model(image.unsqueeze(0)).detach().squeeze(0)
-    # Convert the tensor image back to PIL for display
+def create_image(image, target, prediction):
+     # Convert the tensor image back to PIL for display
     pil_img = transforms.ToPILImage()(image).convert("RGB")
 
     # Create a matplotlib figure
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.imshow(pil_img)
     # Add the grid
     cell_width = image_width / GRID_SIZE
@@ -63,12 +54,14 @@ if __name__ == "__main__":
 
     for i in range(GRID_SIZE):
         for j in range(GRID_SIZE):
-            target_confidence = target[0, i, j]
-            target_bounding_box = target[1:5, i, j]  # Extract relative bounding box
-            target_label = target[5:, i, j]
-            target_digit = torch.argmax(
-                target_label
-            )  # argmax returns the index of the maximum value
+            target_confidence = torch.zeros(1,1,1)
+            if target != None:
+                target_confidence = target[0, i, j]
+                target_bounding_box = target[1:5, i, j]  # Extract relative bounding box
+                target_label = target[5:, i, j]
+                target_digit = torch.argmax(
+                    target_label
+                )  # argmax returns the index of the maximum value
             prediction_confidence = prediction[i, j, 0]
             prediction_bounding_box = prediction[i, j, 1:5]
             prediction_label = prediction[i, j, 5:]
@@ -81,6 +74,10 @@ if __name__ == "__main__":
                     target_digit.item(),
                     # round confidence to 2 decimal places
                     round(target_confidence.item(),2),
+                    i,
+                    j,
+                    cell_width,
+                    cell_height,
                     ax,
                     color="red",
                 )
@@ -89,9 +86,27 @@ if __name__ == "__main__":
                     prediction_bounding_box,
                     prediction_digit.item(),
                     round(prediction_confidence.item(),2),
+                    i,
+                    j,
+                    cell_width,
+                    cell_height,
                     ax,
                     color="green",
                 )
+    return plt
 
+
+if __name__ == "__main__":
+    # Load the dataset
+    dataset = MNISTBoundingBoxDataset(
+        root="data", train=True, download=True, transform=transform
+    )
+
+    # Get a sample image, bounding box, and label
+    image, target = dataset[15]  # Change 0 to any index to test different samples
+    prediction = model(image.unsqueeze(0)).detach().squeeze(0)
+
+    plt = create_image(image, target, prediction)
+   
     # Display the image and bounding box
     plt.show()
